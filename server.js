@@ -1,24 +1,26 @@
-const express = require('express');
-const cors = require('cors');
 const mongoose = require('mongoose');
-require('dotenv').config();
-
-// Connecting express with mongodb using mongoose library
-mongoose.connect(process.env.MONGO_URI).then(() => console.log('Connected to mongodb successfully'));
-
+const express = require('express');
 const app = express();
+require('dotenv').config(); // This loads the .env file
 
-// Will allow the communication between two servers, which are running in the two diff ports.
-app.use(cors());
+// Environment variable for MongoDB URI
+const MONGO_URI = process.env.MONGO_URI;
+const PORT = process.env.PORT || 5000;
 
-// To handle json type data from client
-app.use(express.json());
+// Mongoose connection
+async function connectToMongo() {
+  try {
+    await mongoose.connect(MONGO_URI);
+    console.log('Connected to MongoDB successfully');
+  } catch (err) {
+    console.error('MongoDB connection error:', err);
+    process.exit(1); // Exit process with failure code
+  }
+}
 
-const todoRouter = require('./routes/todoRouter');
-const categoryRouter = require('./routes/categoryRouter');
-
-// Router which has all the endpoints
-app.use(todoRouter);
-app.use(categoryRouter);
-
-app.listen('5000', () => console.log('Server started at port 5000.'));
+// Start the Express server only after a successful connection to MongoDB
+connectToMongo().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+});
